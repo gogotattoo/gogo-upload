@@ -132,8 +132,7 @@ func offsetForBestCorner(resizedBounds, watermarkBounds image.Rectangle, bestCor
 	}
 	return offset
 }
-func addWatermark(watermark image.Image, inputPath string) {
-
+func addWatermark(inputPath string, watermark image.Image) {
 	imgb, _ := os.Open(inputPath)
 	img, err := jpeg.Decode(imgb)
 	if err != nil {
@@ -166,7 +165,7 @@ func addWatermark(watermark image.Image, inputPath string) {
 	defer imgw.Close()
 }
 
-func makeWatermark(path, onFile string) *image.RGBA {
+func makeWatermark(path, onFile string, addLabels bool) *image.RGBA {
 	wmb, _ := os.Open(path)
 	watermark, _ := png.Decode(wmb)
 	defer wmb.Close()
@@ -174,24 +173,30 @@ func makeWatermark(path, onFile string) *image.RGBA {
 	labeledWatermark := image.NewRGBA(rect)
 
 	draw.Draw(labeledWatermark, rect, watermark, rect.Min, draw.Src)
-	addLabel(labeledWatermark, 50, 70, "/gogo")
-	//addLabel(labeledWatermark, 190, 70, "2017/01/12")
-	fileInfo, _ := os.Stat(onFile)
-	addLabel(labeledWatermark, 190, 70, fileInfo.ModTime().Format("2006/01/02"))
-	addLabel(labeledWatermark, 330, 70, "@chushangfeng")
+	if addLabels {
+		addLabel(labeledWatermark, 50, 70, "/gogo")
+		//addLabel(labeledWatermark, 190, 70, "2017/01/12")
+		fileInfo, _ := os.Stat(onFile)
+		addLabel(labeledWatermark, 190, 70, fileInfo.ModTime().Format("2006/01/02"))
+		addLabel(labeledWatermark, 330, 70, "@chushangfeng")
+	}
 	return labeledWatermark
 }
 func main() {
 	os.Mkdir("output", os.ModePerm)
 
 	c := make(chan error)
-	args := os.Args[1:]
+	dirPath := os.Args[1]
+	watermarkPath := "watermarks/gogo-watermark.png"
+	if len(os.Args) > 2 {
+		watermarkPath = os.Args[2]
+	}
 	go func() {
-		c <- filepath.Walk(args[0],
+		c <- filepath.Walk(dirPath,
 			func(path string, _ os.FileInfo, _ error) error {
-				if strings.HasSuffix(path, ".jpg") && !strings.HasPrefix(path, "output") {
+				if strings.HasSuffix(strings.ToLower(path), ".jpg") && !strings.HasPrefix(path, "output") {
 					fmt.Println(path)
-					addWatermark(makeWatermark("gogo-watermark.png", path), path)
+					addWatermark(path, makeWatermark(watermarkPath, path, true))
 				}
 				return nil
 			})
