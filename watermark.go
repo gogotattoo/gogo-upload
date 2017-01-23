@@ -18,6 +18,7 @@ import (
 	"golang.org/x/image/font/inconsolata"
 	"golang.org/x/image/math/fixed"
 	//"io"
+	"flag"
 )
 
 type BasicImage struct {
@@ -175,9 +176,9 @@ func makeWatermark(path, onFile string, addLabels bool) *image.RGBA {
 	draw.Draw(labeledWatermark, rect, watermark, rect.Min, draw.Src)
 	if addLabels {
 		addLabel(labeledWatermark, 50, 70, "/gogo")
-		//addLabel(labeledWatermark, 190, 70, "2017/01/12")
-		fileInfo, _ := os.Stat(onFile)
-		addLabel(labeledWatermark, 190, 70, fileInfo.ModTime().Format("2006/01/02"))
+		addLabel(labeledWatermark, 190, 70, "2017/01/16")
+		//fileInfo, _ := os.Stat(onFile)
+		//addLabel(labeledWatermark, 190, 70, fileInfo.ModTime().Format("2006/01/02"))
 		addLabel(labeledWatermark, 330, 70, "@chushangfeng")
 	}
 	return labeledWatermark
@@ -187,16 +188,14 @@ func main() {
 
 	c := make(chan error)
 	dirPath := os.Args[1]
-	watermarkPath := "watermarks/gogo-watermark.png"
-	if len(os.Args) > 2 {
-		watermarkPath = os.Args[2]
-	}
+	watermarkPath := *flag.String("watermark", "watermarks/gogo.png", "watermark image file")
+  needLabels := *flag.Bool("needLabels", false, "set true if you want labels added on watermark")
 	go func() {
 		c <- filepath.Walk(dirPath,
 			func(path string, _ os.FileInfo, _ error) error {
 				if strings.HasSuffix(strings.ToLower(path), ".jpg") && !strings.HasPrefix(path, "output") {
 					fmt.Println(path)
-					addWatermark(path, makeWatermark(watermarkPath, path, true))
+					addWatermark(path, makeWatermark(watermarkPath, path, needLabels))
 				}
 				return nil
 			})
