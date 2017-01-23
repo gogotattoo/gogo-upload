@@ -186,6 +186,11 @@ func makeWatermark(path, onFile string, addLabels bool) *image.RGBA {
 	return labeledWatermark
 }
 
+func myUsage() {
+     fmt.Printf("Usage: %s [OPTIONS] directory ...\n", os.Args[0])
+     flag.PrintDefaults()
+}
+
 func main() {
 	os.Mkdir("output", os.ModePerm)
 
@@ -193,14 +198,15 @@ func main() {
 	var watermarkPath string
 	flag.StringVar(&watermarkPath, "watermark", "watermarks/gogo.png", "watermark image file")
   needLabels := flag.Bool("needLabels", false, "set true if you want labels added on watermark")
+
+	flag.Usage = myUsage
+	if len(os.Args) == 1 {
+		myUsage()
+		os.Exit(1)
+	}
 	flag.Parse();
 	dirPath := flag.Args()[0]
-
-
-    fmt.Println("dirPath:", dirPath)
-    fmt.Println("watermarkPath:", watermarkPath)
-    fmt.Println("needLabels:", *needLabels)
-    fmt.Println("tail:", flag.Args())
+ 
 	go func() {
 		c <- filepath.Walk(dirPath,
 			func(path string, _ os.FileInfo, _ error) error {
