@@ -166,7 +166,7 @@ func addWatermark(inputPath string, watermark image.Image) {
 	defer imgw.Close()
 }
 
-func makeWatermark(path, onFile string, addLabels bool) *image.RGBA {
+func makeWatermark(path, onFile string) *image.RGBA {
 	wmb, _ := os.Open(path)
 	watermark, _ := png.Decode(wmb)
 	defer wmb.Close()
@@ -174,45 +174,56 @@ func makeWatermark(path, onFile string, addLabels bool) *image.RGBA {
 	labeledWatermark := image.NewRGBA(rect)
 
 	draw.Draw(labeledWatermark, rect, watermark, rect.Min, draw.Src)
-	if addLabels {
-		addLabel(labeledWatermark, 50, 70, "/gogo")
+	if needLabels {
+		addLabel(labeledWatermark, 50, 70, "/"+labelMadeBy)
 		//addLabel(labeledWatermark, 190, 70, "2017/01/16")
 		fileInfo, _ := os.Stat(onFile)
 		date := fileInfo.ModTime().Format("2006/01/02")
+		if len(labelDate) != 0 {
+			date = labelDate
+		}
 		addLabel(labeledWatermark, 190, 70, date)
-		addLabel(labeledWatermark, 330, 70, "@chushangfeng")
+		addLabel(labeledWatermark, 330, 70, "@"+labelMadeAt)
 		fmt.Println("Date:", date)
 	}
 	return labeledWatermark
 }
 
 func myUsage() {
-     fmt.Printf("Usage: %s [OPTIONS] directory ...\n", os.Args[0])
-     flag.PrintDefaults()
+	fmt.Printf("Usage: %s [OPTIONS] directory ...\n", os.Args[0])
+	flag.PrintDefaults()
 }
+
+var watermarkPath string
+var needLabels bool
+var labelDate string
+var labelMadeAt string
+var labelMadeBy string
 
 func main() {
 	os.Mkdir("output", os.ModePerm)
 
 	c := make(chan error)
-	var watermarkPath string
 	flag.StringVar(&watermarkPath, "watermark", "watermarks/gogo.png", "watermark image file")
-  needLabels := flag.Bool("needLabels", false, "set true if you want labels added on watermark")
+	flag.StringVar(&labelDate, "labelDate", "", "date on the label, default is file's update date")
+	flag.BoolVar(&needLabels, "needLabels", false, "set true if you want labels added on watermark")
+	flag.StringVar(&labelMadeAt, "labelMadeAt", "chushangfeng", "the name of the place it was made at")
+	flag.StringVar(&labelMadeBy, "labelMadeBy", "gogo", "the name of the artist")
 
 	flag.Usage = myUsage
 	if len(os.Args) == 1 {
 		myUsage()
 		os.Exit(1)
 	}
-	flag.Parse();
+	flag.Parse()
 	dirPath := flag.Args()[0]
- 
+
 	go func() {
 		c <- filepath.Walk(dirPath,
 			func(path string, _ os.FileInfo, _ error) error {
 				if strings.HasSuffix(strings.ToLower(path), ".jpg") && !strings.HasPrefix(path, "output") {
 					fmt.Println(path)
-					addWatermark(path, makeWatermark(watermarkPath, path, *needLabels))
+					addWatermark(path, makeWatermark(watermarkPath, path))
 				}
 				return nil
 			})
