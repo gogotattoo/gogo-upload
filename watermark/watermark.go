@@ -159,7 +159,7 @@ func AddWatermark(inputPath string, watermark image.Image) string {
 	// h := md5.New()
 	// io.WriteString(h, inputPath)
 	// imgw, _ := os.Create("output/" + fmt.Sprintf("%x", h.Sum(nil)) + ".jpg")
-	outputPath := "output/" + strings.Replace(inputPath[1:], "/", "_", -1)
+	outputPath := OutputDir + "/" + strings.Replace(inputPath[:], "/", "_", -1)
 	imgw, _ := os.Create(outputPath)
 	jpeg.Encode(imgw, m, &jpeg.Options{jpeg.DefaultQuality})
 	defer imgw.Close()
@@ -189,8 +189,12 @@ func MakeWatermark(path, onFile string) *image.RGBA {
 	return labeledWatermark
 }
 
-var WatermarkPath string
-var NeedLabels bool
-var LabelDate string
-var LabelMadeAt string
-var LabelMadeBy string
+var (
+	OutputDir string
+
+	WatermarkPath string
+	NeedLabels    bool
+	LabelDate     string
+	LabelMadeAt   string
+	LabelMadeBy   string
+)
