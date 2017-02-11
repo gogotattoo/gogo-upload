@@ -54,22 +54,23 @@ func init() {
 }
 
 var inputDir string
+var hashes []string
+
+func addWatermark(path string, fi os.FileInfo, err error) error {
+	if strings.HasSuffix(strings.ToLower(path), ".jpg") && !strings.Contains(path, "._") {
+		fmt.Println(path)
+		outputPath := watermark.AddWatermark(path, watermark.MakeWatermark(watermark.WatermarkPath, path))
+		hash, _ := gia.NewShell("localhost:5001").AddDir(outputPath)
+		hashes = append(hashes, hash)
+		fmt.Println("Hash: ", hash)
+	}
+	return nil
+}
 
 func addWatermarks(dirPath string) {
 	c := make(chan error)
-	var hashes []string
 	go func() {
-		c <- filepath.Walk(inputDir,
-			func(path string, _ os.FileInfo, _ error) error {
-				if strings.HasSuffix(strings.ToLower(path), ".jpg") && !strings.Contains(path, "._") {
-					fmt.Println(path)
-					outputPath := watermark.AddWatermark(path, watermark.MakeWatermark(watermark.WatermarkPath, path))
-					hash, _ := gia.NewShell("localhost:5001").AddDir(outputPath)
-					hashes = append(hashes, hash)
-					fmt.Println("Hash: ", hash)
-				}
-				return nil
-			})
+		c <- filepath.Walk(inputDir, addWatermark)
 	}()
 
 	<-c
