@@ -1,24 +1,22 @@
 package main
 
 import (
-	"fmt"
 	"os"
-	"path/filepath"
-	"strings"
 
 	flag "github.com/jteeuwen/go-pkg-optarg"
 
+	"github.com/gogotattoo/gogo-upload/cli"
 	"github.com/gogotattoo/gogo-upload/watermark"
-	gia "github.com/ipfs/go-ipfs-api"
 )
 
-//
-// func myUsage() {
-// 	fmt.Printf("Usage: %s [OPTIONS] directory ...\n", os.Args[0])
-// 	flag.PrintDefaults()
-// }
+const (
+	defaultInputDir      = "."
+	defaultAuthor        = "gogo"
+	defaultPlace         = "chushangfeng"
+	defaultWatermarkPath = "watermarks/gogo-watermark.png"
+)
 
-var dirPath string
+var inputDir string
 
 func init() {
 	flag.Header("General")
@@ -30,6 +28,12 @@ func init() {
 	flag.Add("d", "labelDate", "date on the label, default is file's update date", "")
 	flag.Add("a", "labelMadeAt", "the name of the place it was made at", "chushangfeng")
 	flag.Add("b", "labelMadeBy", "the name of the artist", "gogo")
+
+	// Default values
+	watermark.WatermarkPath = defaultWatermarkPath
+	watermark.LabelMadeAt = defaultPlace
+	watermark.LabelMadeBy = defaultAuthor
+	inputDir = defaultInputDir
 
 	for opt := range flag.Parse() {
 		switch opt.Name {
@@ -53,42 +57,11 @@ func init() {
 	//dirPath = flag.Remainder
 }
 
-var inputDir string
-var hashes []string
-var sh *gia.Shell
-
-func addWatermark(path string, fi os.FileInfo, err error) error {
-	if strings.HasSuffix(strings.ToLower(path), ".jpg") && !strings.Contains(path, "._") {
-		fmt.Println(path)
-		outputPath := watermark.AddWatermark(path, watermark.MakeWatermark(watermark.WatermarkPath, path))
-		hash, _ := sh.AddDir(outputPath)
-		hashes = append(hashes, hash)
-		fmt.Println("Hash: ", hash)
-	}
-	return nil
-}
-
-func addWatermarks(dirPath string) {
-	c := make(chan error)
-	go func() {
-		c <- filepath.Walk(inputDir, addWatermark)
-	}()
-
-	<-c
-	hashes_toml := "["
-	for _, v := range hashes {
-		hashes_toml += "  \"" + v + "\",\n"
-	}
-	hashes_toml += "]"
-	fmt.Println(hashes_toml)
-}
-
 func main() {
 	if len(os.Args) < 2 {
 		flag.Usage()
 		return
 	}
-	sh = gia.NewShell("localhost:5001")
 	os.Mkdir(watermark.OutputDir, os.ModePerm)
-	addWatermarks(dirPath)
+	cli.AddWatermarks(inputDir)
 }
