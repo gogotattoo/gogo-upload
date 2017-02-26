@@ -10,11 +10,12 @@ import (
 )
 
 const (
-	defaultInputDir      = "."
-	defaultOutputDir     = defaultInputDir
-	defaultAuthor        = "gogo"
-	defaultPlace         = "chushangfeng"
-	defaultWatermarkPath = "watermarks/gogo-watermark.png"
+	defaultInputDir               = "."
+	defaultOutputDir              = defaultInputDir
+	defaultAuthor                 = "gogo"
+	defaultPlace                  = "chushangfeng"
+	defaultWatermarkWithLabelPath = "watermarks/gogo-watermark.png"
+	defaultWatermarkPath          = "watermarks/gogo.png"
 )
 
 var inputDir string
@@ -59,7 +60,9 @@ func init() {
 		watermark.OutputDir = inputDir
 	}
 
-	//dirPath = flag.Remainder
+	if watermark.NeedLabels {
+		watermark.WatermarkPath = defaultWatermarkWithLabelPath
+	}
 }
 
 func main() {
