@@ -7,6 +7,7 @@ import (
 	"image/draw"
 	"image/jpeg"
 	"image/png"
+	"io"
 	"os"
 	"strings"
 
@@ -19,35 +20,38 @@ import (
 	//"io"
 )
 
+// BasicImage TODO: This should be used
 type BasicImage struct {
 	Path   string
 	Size   int
 	Suffix string
 }
 
-type WatermarkImage struct {
-	Position    WatermarkPosition
+// WMImage represents an image with a watermark
+type WMImage struct {
+	Position    WMPosition
 	Size        int
 	Path        string
 	Transparent float64
 }
 
-type CreatImage struct {
-	Suffix string
-	Path   string
-}
-
-type WatermarkPosition int
+// WMPosition defines where the watermark will be placed
+type WMPosition int
 
 const (
+	// TopLeftCorner puts watermark in the *top left* corner of the final image
 	TopLeftCorner = iota
+	// TopRightCorner places watermark in the *top right* corner of the final image
 	TopRightCorner
+	// BottomLeftCorner places watermark in the *bottom left* corner of the final image
 	BottomLeftCorner
+	// BottomRightCorner places watermark in the *bottom right* corner of the final image
 	BottomRightCorner
+	// Middle places watermark in the *middle* of the final image
 	Middle
 )
 
-func (b *BasicImage) GetBasicImage(path string) *BasicImage {
+func (b *BasicImage) getBasicImage(path string) *BasicImage {
 	img := &BasicImage{
 		Path:   path,
 		Size:   100,
@@ -59,7 +63,7 @@ func (b *BasicImage) GetBasicImage(path string) *BasicImage {
 
 func addLabel(img *image.RGBA, x, y int, label string) {
 	col := color.RGBA{200, 200, 200, 255}
-	point := fixed.Point26_6{fixed.Int26_6(x * 64), fixed.Int26_6(y * 64)}
+	point := fixed.Point26_6{X: fixed.Int26_6(x * 64), Y: fixed.Int26_6(y * 64)}
 
 	d := &font.Drawer{
 		Dst:  img,
@@ -70,7 +74,7 @@ func addLabel(img *image.RGBA, x, y int, label string) {
 	d.DrawString(label)
 }
 
-func bestCorner(image image.Image, watermarkBounds image.Rectangle) WatermarkPosition {
+func bestCorner(image image.Image, watermarkBounds image.Rectangle) WMPosition {
 	bounds := image.Bounds()
 	// Testirng the top left corner
 	var rgb [4]float32
@@ -111,26 +115,32 @@ func bestCorner(image image.Image, watermarkBounds image.Rectangle) WatermarkPos
 		}
 		fmt.Println(value, index)
 	}
-	return WatermarkPosition(bestIndex)
+	return WMPosition(bestIndex)
 }
 
-func offsetForBestCorner(resizedBounds, watermarkBounds image.Rectangle, bestCorner WatermarkPosition) image.Point {
+func offsetForBestCorner(resizedBounds, watermarkBounds image.Rectangle, bestCorner WMPosition) image.Point {
 
-	const WATERMARK_PADDING = 20
+	const WMPadding = 20
 
-	offset := image.Pt(WATERMARK_PADDING, WATERMARK_PADDING)
+	offset := image.Pt(WMPadding, WMPadding)
 	switch bestCorner {
 	case TopRightCorner:
-		offset = image.Pt(resizedBounds.Dx()-watermarkBounds.Dx()-WATERMARK_PADDING, WATERMARK_PADDING)
+		offset = image.Pt(resizedBounds.Dx()-watermarkBounds.Dx()-WMPadding, WMPadding)
 	case BottomLeftCorner:
-		offset = image.Pt(WATERMARK_PADDING, resizedBounds.Dy()-watermarkBounds.Dy()-WATERMARK_PADDING)
+		offset = image.Pt(WMPadding, resizedBounds.Dy()-watermarkBounds.Dy()-WMPadding)
 	case BottomRightCorner:
-		offset = image.Pt(resizedBounds.Dx()-watermarkBounds.Dx()-WATERMARK_PADDING,
-			resizedBounds.Dy()-watermarkBounds.Dy()-WATERMARK_PADDING)
+		offset = image.Pt(resizedBounds.Dx()-watermarkBounds.Dx()-WMPadding,
+			resizedBounds.Dy()-watermarkBounds.Dy()-WMPadding)
 
 	}
 	return offset
 }
+
+// AddWatermark adds a given image.Image watermark to the file provided(path),
+// returns the path to the output file
+// TODO: improve output file name format
+// suggestions:
+//		- 2006_01_02_artist_tattooname_shopname_ipfshash.jpg
 func AddWatermark(inputPath string, watermark image.Image) string {
 	imgb, _ := os.Open(inputPath)
 	img, err := jpeg.Decode(imgb)
@@ -161,40 +171,49 @@ func AddWatermark(inputPath string, watermark image.Image) string {
 	// imgw, _ := os.Create("output/" + fmt.Sprintf("%x", h.Sum(nil)) + ".jpg")
 	outputPath := OutputDir + "/" + strings.Replace(inputPath[:], "/", "_", -1)
 	imgw, _ := os.Create(outputPath)
-	jpeg.Encode(imgw, m, &jpeg.Options{jpeg.DefaultQuality})
+	jpeg.Encode(imgw, m, &jpeg.Options{Quality: jpeg.DefaultQuality})
 	defer imgw.Close()
 	return outputPath
 }
 
-func MakeWatermark(path, onFile string) *image.RGBA {
-	wmb, _ := os.Open(path)
-	wmk, _ := png.Decode(wmb)
-	defer wmb.Close()
+// MakeWatermark creates an *image.RGBA with given watermark
+// Parameter NeedLabels defines if date, artist and place should be added to the
+// label
+func MakeWatermark(wmReader io.Reader, onFile string) (labeledWatermark *image.RGBA) {
+	wmk, _ := png.Decode(wmReader)
 	rect := wmk.Bounds()
-	labeledWatermark := image.NewRGBA(rect)
+	labeledWatermark = image.NewRGBA(rect)
 
 	draw.Draw(labeledWatermark, rect, wmk, rect.Min, draw.Src)
-	if NeedLabels {
-		addLabel(labeledWatermark, 50, 70, "/"+LabelMadeBy)
-		//addLabel(labeledWatermark, 190, 70, "2017/01/16")
-		fileInfo, _ := os.Stat(onFile)
-		date := fileInfo.ModTime().Format("2006/01/02")
-		if len(LabelDate) != 0 {
-			date = LabelDate
-		}
-		addLabel(labeledWatermark, 190, 70, date)
-		addLabel(labeledWatermark, 330, 70, "@"+LabelMadeAt)
-		fmt.Println("Date:", date)
+	if !NeedLabels {
+		return labeledWatermark
 	}
-	return labeledWatermark
+	addLabel(labeledWatermark, 50, 70, "/"+LabelMadeBy)
+	//addLabel(labeledWatermark, 190, 70, "2017/01/16")
+	fileInfo, _ := os.Stat(onFile)
+	date := fileInfo.ModTime().Format("2006/01/02")
+	if len(LabelDate) != 0 {
+		date = LabelDate
+	}
+	addLabel(labeledWatermark, 190, 70, date)
+	addLabel(labeledWatermark, 330, 70, "@"+LabelMadeAt)
+	fmt.Println("Date:", date)
+
+	return
 }
 
 var (
+	// OutputDir global output directory parameter
 	OutputDir string
-
+	// WatermarkPath defines the path to the watermark png image, it should be of the
+	// proper format: check examples provided for our masters in /watermars foulder
 	WatermarkPath string
-	NeedLabels    bool
-	LabelDate     string
-	LabelMadeAt   string
-	LabelMadeBy   string
+	// NeedLabels defines if date, artist name and shop name should be added on the watermark
+	NeedLabels bool
+	// LabelDate format: 2006/01/02
+	LabelDate string
+	// LabelMadeAt the name of the place it was made at
+	LabelMadeAt string
+	// LabelMadeBy default: gogo
+	LabelMadeBy string
 )

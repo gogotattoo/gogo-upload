@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,11 +12,13 @@ import (
 
 func addWatermarkAndUpload(path string, fi os.FileInfo, err error) error {
 	if strings.HasSuffix(strings.ToLower(path), ".jpg") && !strings.Contains(path, "._") {
-		fmt.Println(path)
-		outputPath := watermark.AddWatermark(path, watermark.MakeWatermark(watermark.WatermarkPath, path))
+		log.Println(path)
+		file, _ := os.Open(watermark.WatermarkPath)
+		defer file.Close()
+		outputPath := watermark.AddWatermark(path, watermark.MakeWatermark(file, path))
 		hash, _ := sh.AddDir(outputPath)
 		hashes = append(hashes, hash)
-		fmt.Println("Hash: ", hash)
+		log.Println("Hash: ", hash)
 	}
 	return nil
 }
@@ -24,6 +26,7 @@ func addWatermarkAndUpload(path string, fi os.FileInfo, err error) error {
 var hashes []string
 var sh *gia.Shell
 
+// AddWatermarks to all the .jpg files in the folder and subfolders of dirPath
 func AddWatermarks(dirPath string) {
 	sh = gia.NewShell("localhost:5001")
 	c := make(chan error)
@@ -32,10 +35,10 @@ func AddWatermarks(dirPath string) {
 	}()
 	<-c
 
-	hashes_toml := "["
+	hashesToml := "["
 	for _, v := range hashes {
-		hashes_toml += "  \"" + v + "\",\n"
+		hashesToml += "  \"" + v + "\",\n"
 	}
-	hashes_toml += "]"
-	fmt.Println(hashes_toml)
+	hashesToml += "]"
+	log.Println(hashesToml)
 }
