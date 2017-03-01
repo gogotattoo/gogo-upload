@@ -1,7 +1,6 @@
 package watermark
 
 import (
-	"io"
 	"os"
 	"testing"
 )
@@ -10,13 +9,6 @@ const (
 	inputPath     = "../input.jpg"
 	watermarkPath = "../watermarks/gogo.png"
 )
-
-var (
-	fileReader io.Reader
-)
-
-func init() {
-}
 
 func TestMakeWatermark(t *testing.T) {
 
