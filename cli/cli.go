@@ -11,7 +11,9 @@ import (
 )
 
 func addWatermarkAndUpload(path string, fi os.FileInfo, err error) error {
-	if strings.HasSuffix(strings.ToLower(path), ".jpg") && !strings.Contains(path, "._") {
+	lp := strings.ToLower(path)
+	if (strings.HasSuffix(lp, ".jpeg") || strings.HasSuffix(lp, ".jpg")) &&
+		!strings.Contains(path, "._") {
 		log.Println(path)
 		file, _ := os.Open(watermark.WatermarkPath)
 		defer file.Close()
