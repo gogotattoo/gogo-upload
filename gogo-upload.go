@@ -37,9 +37,11 @@ func init() {
 	watermark.LabelMadeBy = defaultAuthor
 	inputDir = defaultInputDir
 
+	var watermarkFileOverriten bool
 	for opt := range flag.Parse() {
 		switch opt.Name {
 		case "watermark":
+			watermarkFileOverriten = true
 			watermark.WatermarkPath = opt.String()
 		case "labelDate":
 			watermark.LabelDate = opt.String()
@@ -60,7 +62,7 @@ func init() {
 		watermark.OutputDir = inputDir
 	}
 
-	if watermark.NeedLabels {
+	if watermark.NeedLabels && !watermarkFileOverriten {
 		watermark.WatermarkPath = defaultWatermarkWithLabelPath
 	}
 }
