@@ -27,18 +27,19 @@ var hashes []string
 var sh *gia.Shell
 
 // AddWatermarks to all the .jpg files in the folder and subfolders of dirPath
-func AddWatermarks(dirPath string) {
+func AddWatermarks(dirPath string) []string {
+	hashes = hashes[:0]
 	sh = gia.NewShell("localhost:5001")
 	c := make(chan error)
 	go func() {
 		c <- filepath.Walk(dirPath, addWatermarkAndUpload)
 	}()
 	<-c
-
 	hashesToml := "["
 	for _, v := range hashes {
 		hashesToml += "  \"" + v + "\",\n"
 	}
 	hashesToml += "]"
 	log.Println(hashesToml)
+	return hashes
 }
