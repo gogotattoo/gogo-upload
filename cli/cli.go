@@ -17,7 +17,12 @@ func addWatermarkAndUpload(path string, fi os.FileInfo, err error) error {
 		log.Println(path)
 		file, _ := os.Open(watermark.WatermarkPath)
 		defer file.Close()
-		outputPath := watermark.AddWatermark(path, watermark.MakeWatermark(file, path))
+		var outputPath string
+		if watermark.V2 {
+			outputPath = watermark.AddWatermark(path, watermark.MakeWatermarkV2(file, path))
+		} else {
+			outputPath = watermark.AddWatermark(path, watermark.MakeWatermark(file, path))
+		}
 		hash, _ := sh.AddDir(outputPath)
 		hashes = append(hashes, hash)
 		os.Rename(outputPath, outputPath[:len(outputPath)-4]+"_"+hash+".JPG")

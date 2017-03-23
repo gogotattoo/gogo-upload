@@ -10,12 +10,13 @@ import (
 )
 
 const (
-	defaultInputDir               = "."
-	defaultOutputDir              = defaultInputDir
-	defaultAuthor                 = "gogo"
-	defaultPlace                  = "chushangfeng"
-	defaultWatermarkWithLabelPath = "watermarks/gogo-watermark.png"
-	defaultWatermarkPath          = "watermarks/gogo.png"
+	defaultInputDir                 = "."
+	defaultOutputDir                = defaultInputDir
+	defaultAuthor                   = "gogo"
+	defaultPlace                    = "chushangfeng"
+	defaultWatermarkWithLabelPath   = "watermarks/gogo-watermark.png"
+	defaultWatermarkWithLabelV2Path = "watermarks/gogo-label-v2.png"
+	defaultWatermarkPath            = "watermarks/gogo.png"
 )
 
 var inputDir string
@@ -37,7 +38,7 @@ func init() {
 	watermark.LabelMadeBy = defaultAuthor
 	inputDir = defaultInputDir
 
-	var watermarkFileOverriten bool
+	watermarkFileOverriten := false
 	for opt := range flag.Parse() {
 		switch opt.Name {
 		case "watermark":
@@ -55,6 +56,8 @@ func init() {
 			inputDir = opt.String()
 		case "outputDir":
 			watermark.OutputDir = opt.String()
+		case "v2":
+			watermark.V2 = opt.Bool()
 		}
 	}
 
@@ -63,7 +66,11 @@ func init() {
 	}
 
 	if watermark.NeedLabels && !watermarkFileOverriten {
-		watermark.WatermarkPath = defaultWatermarkWithLabelPath
+		if watermark.V2 {
+			watermark.WatermarkPath = defaultWatermarkWithLabelV2Path
+		} else {
+			watermark.WatermarkPath = defaultWatermarkWithLabelPath
+		}
 	}
 }
 

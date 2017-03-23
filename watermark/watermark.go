@@ -176,6 +176,39 @@ func AddWatermark(inputPath string, watermark image.Image) string {
 	return outputPath
 }
 
+// MakeWatermarkV2 creates an *image.RGBA with given watermark
+// Parameter NeedLabels defines if date, artist and place should be added to the
+// label
+func MakeWatermarkV2(wmReader io.Reader, onFile string) (labeledWatermark *image.RGBA) {
+	wmk, _ := png.Decode(wmReader)
+	rect := wmk.Bounds()
+
+	resizedWatermark := resize.Resize(uint(wmk.Bounds().Max.X/2), 0, wmk, resize.Lanczos3)
+	resizedBounds := resizedWatermark.Bounds()
+	labeledWatermark = image.NewRGBA(resizedBounds)
+
+	draw.Draw(labeledWatermark, rect, resizedWatermark, rect.Min, draw.Src)
+	if !NeedLabels {
+		return labeledWatermark
+	}
+	leftOffset := 85
+	topOffset := 90
+	distOffset := 200
+	addLabel(labeledWatermark, leftOffset, topOffset, "/"+LabelMadeBy)
+	//addLabel(labeledWatermark, 190, 70, "2017/01/16")
+	fileInfo, _ := os.Stat(onFile)
+	date := fileInfo.ModTime().Format("2006/01/02")
+	if len(LabelDate) != 0 {
+		date = LabelDate
+	}
+	addLabel(labeledWatermark, leftOffset+distOffset, topOffset, date)
+	if len(LabelMadeAt) != 0 {
+		addLabel(labeledWatermark, leftOffset+2*distOffset, topOffset, "@"+LabelMadeAt)
+	}
+	fmt.Println("Date:", date)
+	return
+}
+
 // MakeWatermark creates an *image.RGBA with given watermark
 // Parameter NeedLabels defines if date, artist and place should be added to the
 // label
@@ -196,9 +229,10 @@ func MakeWatermark(wmReader io.Reader, onFile string) (labeledWatermark *image.R
 		date = LabelDate
 	}
 	addLabel(labeledWatermark, 190, 70, date)
-	addLabel(labeledWatermark, 330, 70, "@"+LabelMadeAt)
+	if len(LabelMadeAt) != 0 {
+		addLabel(labeledWatermark, 330, 70, "@"+LabelMadeAt)
+	}
 	fmt.Println("Date:", date)
-
 	return
 }
 
@@ -216,4 +250,6 @@ var (
 	LabelMadeAt string
 	// LabelMadeBy default: gogo
 	LabelMadeBy string
+	// V2 - set true to use the second version of watermark
+	V2 bool
 )
