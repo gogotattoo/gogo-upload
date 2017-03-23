@@ -31,6 +31,7 @@ func init() {
 	flag.Add("d", "labelDate", "date on the label, default is file's update date", "[file date]")
 	flag.Add("a", "labelMadeAt", "the name of the place it was made at", defaultPlace)
 	flag.Add("b", "labelMadeBy", "the name of the artist", defaultAuthor)
+	flag.Add("v2", "watermarkVersion2", "the second generation of our watermarks", true)
 
 	// Default values
 	watermark.WatermarkPath = defaultWatermarkPath
@@ -56,8 +57,8 @@ func init() {
 			inputDir = opt.String()
 		case "outputDir":
 			watermark.OutputDir = opt.String()
-		case "v2":
-			watermark.V2 = opt.Bool()
+		case "watermarkVersion2":
+			watermark.V2 = true
 		}
 	}
 
