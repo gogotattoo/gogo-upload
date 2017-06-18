@@ -32,6 +32,7 @@ func init() {
 	flag.Add("a", "labelMadeAt", "the name of the place it was made at", defaultPlace)
 	flag.Add("b", "labelMadeBy", "the name of the artist", defaultAuthor)
 	flag.Add("v2", "watermarkVersion2", "the second generation of our watermarks", true)
+	flag.Add("v3", "watermarkVersion3", "the third awesome generation of our watermarks", true)
 
 	// Default values
 	watermark.WatermarkPath = defaultWatermarkPath
@@ -59,6 +60,10 @@ func init() {
 			watermark.OutputDir = opt.String()
 		case "watermarkVersion2":
 			watermark.V2 = true
+			watermark.V3 = false
+		case "watermarkVersion3":
+			watermark.V2 = false
+			watermark.V3 = true
 		}
 	}
 

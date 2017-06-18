@@ -20,7 +20,9 @@ func addWatermarkAndUpload(path string, fi os.FileInfo, err error) error {
 		file, _ := os.Open(watermark.WatermarkPath)
 		defer file.Close()
 		var outputPath string
-		if watermark.V2 {
+		if watermark.V3 {
+			outputPath = watermark.AddWatermark(path, watermark.MakeWatermarkV3(file, path))
+		} else if watermark.V2 {
 			outputPath = watermark.AddWatermark(path, watermark.MakeWatermarkV2(file, path))
 		} else {
 			outputPath = watermark.AddWatermark(path, watermark.MakeWatermark(file, path))
