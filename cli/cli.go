@@ -117,5 +117,8 @@ func AddWatermarks(dirPath string) []string {
 	}
 	hashesToml += "]"
 	log.Println(hashesToml)
+	if len(videoHashes) != 0 {
+		return videoHashes
+	}
 	return hashes
 }
