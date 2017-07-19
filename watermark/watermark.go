@@ -281,4 +281,6 @@ var (
 	V2 bool
 	// V3 - set true to use the third generation of watermarks
 	V3 bool
+	// Only to generate watermark only
+	Only bool
 )

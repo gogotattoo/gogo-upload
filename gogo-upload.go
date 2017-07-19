@@ -10,13 +10,12 @@ import (
 )
 
 const (
-	defaultInputDir                 = "."
-	defaultOutputDir                = defaultInputDir
-	defaultAuthor                   = "gogo"
-	defaultPlace                    = "chushangfeng"
-	defaultWatermarkWithLabelPath   = "watermarks/gogo-watermark.png"
-	defaultWatermarkWithLabelV2Path = "watermarks/gogo-label-v2.png"
-	defaultWatermarkPath            = "watermarks/gogo.png"
+	defaultInputDir               = "."
+	defaultOutputDir              = defaultInputDir
+	defaultAuthor                 = "gogo"
+	defaultPlace                  = "chushangfeng"
+	defaultWatermarkWithLabelPath = "watermarks/v3/gogo.png"
+	defaultWatermarkPath          = "watermarks/v3/gogo.png"
 )
 
 var inputDir string
@@ -33,6 +32,7 @@ func init() {
 	flag.Add("b", "labelMadeBy", "the name of the artist", defaultAuthor)
 	flag.Add("v2", "watermarkVersion2", "the second generation of our watermarks", true)
 	flag.Add("v3", "watermarkVersion3", "the third awesome generation of our watermarks", true)
+	flag.Add("x", "watermarkOnly", "Generates watermark only", false)
 
 	// Default values
 	watermark.WatermarkPath = defaultWatermarkPath
@@ -64,6 +64,8 @@ func init() {
 		case "watermarkVersion3":
 			watermark.V2 = false
 			watermark.V3 = true
+		case "watermarkOnly":
+			watermark.Only = true
 		}
 	}
 
@@ -72,11 +74,8 @@ func init() {
 	}
 
 	if watermark.NeedLabels && !watermarkFileOverriten {
-		if watermark.V2 {
-			watermark.WatermarkPath = defaultWatermarkWithLabelV2Path
-		} else {
-			watermark.WatermarkPath = defaultWatermarkWithLabelPath
-		}
+		watermark.WatermarkPath = defaultWatermarkWithLabelPath
+
 	}
 }
 
