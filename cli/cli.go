@@ -26,6 +26,7 @@ func addWatermarkAndUpload(path string, fi os.FileInfo, err error) error {
 		ffmpegCmd := exec.Command("ffmpeg",
 			"-i", path,
 			"-i", watermark.OutputDir+"/w.png",
+			"-strict", "-2",
 			"-filter_complex", "overlay=x=(main_w-overlay_w):y=(main_h-overlay_h)",
 			outputPath)
 		ffmpegCmd.Stdout = os.Stdout
