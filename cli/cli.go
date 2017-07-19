@@ -37,6 +37,7 @@ func addWatermarkAndUpload(path string, fi os.FileInfo, err error) error {
 		videoHashes = append(videoHashes, hash)
 		os.Rename(outputPath, outputPath[:len(outputPath)-4]+"_"+hash+".mp4")
 		log.Println("Video Hash: ", hash)
+		watermark.Only = false
 	}
 	if (strings.HasSuffix(lp, ".jpeg") || strings.HasSuffix(lp, ".jpg")) &&
 		!strings.Contains(path, "._") {
