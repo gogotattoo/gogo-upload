@@ -32,6 +32,7 @@ func init() {
 	flag.Add("b", "labelMadeBy", "the name of the artist", defaultAuthor)
 	flag.Add("v2", "watermarkVersion2", "the second generation of our watermarks", true)
 	flag.Add("v3", "watermarkVersion3", "the third awesome generation of our watermarks", true)
+	flag.Add("v4", "watermarkVersion4", "the fourth generation of our watermarks for new artists", true)
 	flag.Add("x", "watermarkOnly", "Generates watermark only", false)
 
 	// Default values
@@ -64,6 +65,10 @@ func init() {
 		case "watermarkVersion3":
 			watermark.V2 = false
 			watermark.V3 = true
+		case "watermarkVersion4":
+			watermark.V2 = false
+			watermark.V3 = false
+			watermark.V4 = true
 		case "watermarkOnly":
 			watermark.Only = true
 		}

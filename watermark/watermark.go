@@ -176,6 +176,33 @@ func AddWatermark(inputPath string, watermark image.Image) string {
 	return outputPath
 }
 
+// MakeWatermarkV4 creates an *image.RGBA with given watermark
+// Parameter NeedLabels defines if date, artist and place should be added to the
+// label
+func MakeWatermarkV4(wmReader io.Reader, onFile string) (labeledWatermark *image.RGBA) {
+	wmk, _ := png.Decode(wmReader)
+	rect := wmk.Bounds()
+	labeledWatermark = image.NewRGBA(rect)
+
+	draw.Draw(labeledWatermark, rect, wmk, rect.Min, draw.Src)
+	if !NeedLabels {
+		return labeledWatermark
+	}
+	addLabel(labeledWatermark, 70, 90, "/"+LabelMadeBy)
+	//addLabel(labeledWatermark, 190, 70, "2017/01/16")
+	fileInfo, _ := os.Stat(onFile)
+	date := fileInfo.ModTime().Format("2006/01/02")
+	if len(LabelDate) != 0 {
+		date = LabelDate
+	}
+	addLabel(labeledWatermark, 220, 90, date)
+	if len(LabelMadeAt) != 0 {
+		addLabel(labeledWatermark, 380, 90, "@"+LabelMadeAt)
+	}
+	fmt.Println("Date:", date)
+	return
+}
+
 // MakeWatermarkV3 creates an *image.RGBA with given watermark
 // Parameter NeedLabels defines if date, artist and place should be added to the
 // label
@@ -281,6 +308,8 @@ var (
 	V2 bool
 	// V3 - set true to use the third generation of watermarks
 	V3 bool
+	// V4 - now it is just getting annoying and we definetely better refactor it asap ;}
+	V4 bool
 	// Only to generate watermark only
 	Only bool
 )

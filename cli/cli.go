@@ -43,7 +43,9 @@ func addWatermarkAndUpload(path string, fi os.FileInfo, err error) error {
 		!strings.Contains(path, "._") {
 		file, _ := os.Open(watermark.WatermarkPath)
 		defer file.Close()
-		if watermark.V3 {
+		if watermark.V4 {
+			outputPath = watermark.AddWatermark(path, watermark.MakeWatermarkV4(file, path))
+		} else if watermark.V3 {
 			outputPath = watermark.AddWatermark(path, watermark.MakeWatermarkV3(file, path))
 		} else if watermark.V2 {
 			outputPath = watermark.AddWatermark(path, watermark.MakeWatermarkV2(file, path))
