@@ -182,22 +182,24 @@ func AddWatermark(inputPath string, watermark image.Image) string {
 func MakeWatermarkV4(wmReader io.Reader, onFile string) (labeledWatermark *image.RGBA) {
 	wmk, _ := png.Decode(wmReader)
 	rect := wmk.Bounds()
-	labeledWatermark = image.NewRGBA(rect)
+	resizedWatermark := resize.Resize(uint(wmk.Bounds().Max.X/2), 0, wmk, resize.Lanczos3)
+	resizedBounds := resizedWatermark.Bounds()
+	labeledWatermark = image.NewRGBA(resizedBounds)
 
-	draw.Draw(labeledWatermark, rect, wmk, rect.Min, draw.Src)
+	draw.Draw(labeledWatermark, rect, resizedWatermark, rect.Min, draw.Src)
 	if !NeedLabels {
 		return labeledWatermark
 	}
-	addLabel(labeledWatermark, 70, 90, "/"+LabelMadeBy)
+	addLabel(labeledWatermark, 50, 100, "/"+LabelMadeBy)
 	//addLabel(labeledWatermark, 190, 70, "2017/01/16")
 	fileInfo, _ := os.Stat(onFile)
 	date := fileInfo.ModTime().Format("2006/01/02")
 	if len(LabelDate) != 0 {
 		date = LabelDate
 	}
-	addLabel(labeledWatermark, 220, 90, date)
+	addLabel(labeledWatermark, 210, 100, date)
 	if len(LabelMadeAt) != 0 {
-		addLabel(labeledWatermark, 380, 90, "@"+LabelMadeAt)
+		addLabel(labeledWatermark, 400, 100, "@"+LabelMadeAt)
 	}
 	fmt.Println("Date:", date)
 	return

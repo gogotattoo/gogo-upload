@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"image"
 	"image/png"
 	"log"
 	"os"
@@ -43,15 +44,17 @@ func addWatermarkAndUpload(path string, fi os.FileInfo, err error) error {
 		!strings.Contains(path, "._") {
 		file, _ := os.Open(watermark.WatermarkPath)
 		defer file.Close()
+		var w *image.RGBA
 		if watermark.V4 {
-			outputPath = watermark.AddWatermark(path, watermark.MakeWatermarkV4(file, path))
+			w = watermark.MakeWatermarkV4(file, path)
 		} else if watermark.V3 {
-			outputPath = watermark.AddWatermark(path, watermark.MakeWatermarkV3(file, path))
+			w = watermark.MakeWatermarkV3(file, path)
 		} else if watermark.V2 {
-			outputPath = watermark.AddWatermark(path, watermark.MakeWatermarkV2(file, path))
+			w = watermark.MakeWatermarkV2(file, path)
 		} else {
-			outputPath = watermark.AddWatermark(path, watermark.MakeWatermark(file, path))
+			w = watermark.MakeWatermark(file, path)
 		}
+		outputPath = watermark.AddWatermark(path, w)
 		hash := uploadToIpfs(outputPath)
 		hashes = append(hashes, hash)
 		os.Rename(outputPath, outputPath[:len(outputPath)-4]+"_"+hash+".JPG")
@@ -94,7 +97,12 @@ func AddWatermarks(dirPath string) []string {
 	if watermark.Only {
 		file, _ := os.Open(watermark.WatermarkPath)
 		defer file.Close()
-		w := watermark.MakeWatermarkV3(file, dirPath)
+		var w *image.RGBA
+		if watermark.V4 {
+			w = watermark.MakeWatermarkV4(file, dirPath)
+		} else {
+			w = watermark.MakeWatermarkV3(file, dirPath)
+		}
 		outputPath := watermark.OutputDir + "/w.png"
 		imgw, _ := os.Create(outputPath)
 		png.Encode(imgw, w)
