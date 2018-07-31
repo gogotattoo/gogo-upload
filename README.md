@@ -1,2 +1,2 @@
 # gogo-upload
-This module will add watermarks to the photos and upload them to IPFS.
+This module adds watermarks to the photos and upload them to IPFS.
